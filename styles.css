@@ -107,6 +107,10 @@ button {
   margin: 0;
 }
 
+.panel-header h2 {
+  font-weight: 600;
+}
+
 .brand h1 {
   font-size: 18px;
   font-weight: 600;
@@ -461,6 +465,7 @@ button {
 
 .roulette-title-input {
   font-size: 20px;
+  font-weight: 600;
 }
 
 .project-name-input:focus,
@@ -798,6 +803,17 @@ canvas {
   margin: 18px 0;
 }
 
+.add-item-form .primary-button {
+  border-color: var(--chat-surface);
+  background: var(--chat-surface);
+  color: var(--ink);
+}
+
+.add-item-form .primary-button:hover {
+  border-color: #e5e7eb;
+  background: #ffffff;
+}
+
 .add-item-form input,
 .item-input {
   width: 100%;
@@ -933,7 +949,10 @@ canvas {
   }
 
   .mobile-sidebar-toggle {
-    position: static;
+    position: fixed;
+    top: 10px;
+    left: 12px;
+    z-index: 90;
     width: 36px;
     height: 36px;
     display: grid;
@@ -957,7 +976,7 @@ canvas {
     inset: 0;
     z-index: 60;
     display: none;
-    background: rgba(0, 0, 0, 0.48);
+    background: rgba(15, 23, 42, 0.18);
   }
 
   .app-shell.sidebar-open .sidebar-backdrop {
@@ -979,8 +998,8 @@ canvas {
     max-height: none;
     border-right: 0;
     border-bottom: 0;
-    background: #050505;
-    color: #f5f5f5;
+    background: #ffffff;
+    color: var(--ink);
     border-right: 0;
     box-shadow: 18px 0 42px rgba(0, 0, 0, 0.28);
   }
@@ -998,32 +1017,7 @@ canvas {
   .section-title,
   .shared-empty,
   .account-summary span {
-    color: #9b9b9b;
-  }
-
-  .brand-mark,
-  .account-compact,
-  .icon-button {
-    background: #171717;
-    border-color: #2b2b2b;
-    color: #f5f5f5;
-  }
-
-  .brand h1,
-  .account-summary strong,
-  .project-button,
-  .project-button.shared {
-    color: #f5f5f5;
-  }
-
-  .project-button.active {
-    background: #202020;
-    color: #ffffff;
-  }
-
-  #projectList::-webkit-scrollbar-thumb,
-  #sharedProjectList::-webkit-scrollbar-thumb {
-    background: #3a3a3a;
+    color: var(--muted);
   }
 
   .workspace {
@@ -1095,8 +1089,7 @@ canvas {
   }
 
   .mobile-sidebar-toggle {
-    grid-column: 1;
-    grid-row: 1;
+    position: fixed;
   }
 
   .topbar > div:first-child {
