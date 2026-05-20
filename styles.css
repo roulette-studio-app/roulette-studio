@@ -1,6 +1,6 @@
 :root {
   color-scheme: light;
-  --bg: #f7f7f5;
+  --bg: #ffffff;
   --panel: #ffffff;
   --ink: #20201f;
   --muted: #72706b;
@@ -50,7 +50,7 @@ button {
 }
 
 .sidebar {
-  background: #fbfaf8;
+  background: #f6f8fb;
   color: var(--ink);
   border-right: 1px solid #d8d4cb;
   padding: 24px;
@@ -61,25 +61,40 @@ button {
 
 .brand {
   display: flex;
-  gap: 14px;
+  gap: 12px;
   align-items: center;
 }
 
 .brand-mark {
-  width: 44px;
-  height: 44px;
+  width: 38px;
+  height: 38px;
   display: grid;
   place-items: center;
   border-radius: 8px;
-  background: #f1f0ed;
-  color: #ffffff;
+  background: #ffffff;
   color: var(--ink);
+  border: 1px solid #d8e0ec;
+  box-shadow: 0 4px 14px rgba(30, 42, 60, 0.06);
   font-weight: 800;
 }
 
 .brand h1,
 .panel-header h2 {
   margin: 0;
+}
+
+.brand h1 {
+  font-size: 22px;
+  line-height: 1.1;
+}
+
+.brand-subtitle {
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
 }
 
 .eyebrow {
@@ -129,16 +144,44 @@ button {
 
 .account-compact {
   position: relative;
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 8px;
+  border: 1px solid #dde4ef;
+  border-radius: 999px;
+  background: #ffffff;
 }
 
 .account-avatar {
-  width: 42px;
-  height: 42px;
-  border: 1px solid #cbd8e8;
+  width: 34px;
+  height: 34px;
+  border: 1px solid #d8e0ec;
   border-radius: 50%;
   background: #ffffff;
   color: var(--blue-dark);
   font-weight: 900;
+}
+
+.account-summary {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.account-summary span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.account-summary strong {
+  color: var(--ink);
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .account-avatar[aria-expanded="true"] {
@@ -147,7 +190,7 @@ button {
 
 .account-popover {
   position: absolute;
-  top: 50px;
+  top: 54px;
   left: 0;
   z-index: 30;
   width: 250px;
@@ -239,6 +282,7 @@ button {
 .workspace {
   padding: 24px;
   min-width: 0;
+  background: #ffffff;
 }
 
 .topbar {
@@ -552,7 +596,7 @@ button:disabled {
 .tab-button {
   min-width: 118px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 999px;
   background: #ffffff;
   color: var(--ink);
   padding: 10px 14px;
@@ -568,7 +612,7 @@ button:disabled {
 .add-tab-button {
   min-width: 44px;
   border: 1px dashed #9aa7bc;
-  border-radius: 8px;
+  border-radius: 999px;
   background: transparent;
   color: var(--muted);
   font-size: 20px;

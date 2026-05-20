@@ -27,6 +27,7 @@ const moreActionsPanel = document.querySelector("#moreActionsPanel");
 const shareProjectButton = document.querySelector("#shareProjectButton");
 const accountMenuButton = document.querySelector("#accountMenuButton");
 const accountPopover = document.querySelector("#accountPopover");
+const accountSummaryText = document.querySelector("#accountSummaryText");
 const syncStatus = document.querySelector("#syncStatus");
 const signInButton = document.querySelector("#signInButton");
 const signOutButton = document.querySelector("#signOutButton");
@@ -185,6 +186,7 @@ function render() {
   rouletteTitleInput.value = roulette.title;
   userEmail.textContent = currentUser?.email || "로그인하지 않음";
   accountMenuButton.textContent = currentUser?.email?.slice(0, 1).toUpperCase() || "?";
+  accountSummaryText.textContent = currentUser?.email || "로그인 필요";
   signOutButton.disabled = !currentUser;
   shareProjectButton.disabled = !currentUser || activeWorkspace.type === "shared";
   renderProjects();
