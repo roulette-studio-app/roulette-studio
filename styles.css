@@ -50,13 +50,15 @@ button {
 }
 
 .sidebar {
-  background: #f6f8fb;
+  background: #f7f6f3;
   color: var(--ink);
   border-right: 1px solid #d8d4cb;
   padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 26px;
+  gap: 18px;
+  max-height: 100vh;
+  overflow: hidden;
 }
 
 .brand {
@@ -140,6 +142,31 @@ button {
 .project-list {
   display: grid;
   gap: 8px;
+}
+
+#projectList,
+#sharedProjectList {
+  max-height: 210px;
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: #c6c2bb transparent;
+}
+
+#projectList::-webkit-scrollbar,
+#sharedProjectList::-webkit-scrollbar {
+  width: 8px;
+}
+
+#projectList::-webkit-scrollbar-track,
+#sharedProjectList::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#projectList::-webkit-scrollbar-thumb,
+#sharedProjectList::-webkit-scrollbar-thumb {
+  background: #c6c2bb;
+  border-radius: 999px;
 }
 
 .account-compact {
@@ -459,7 +486,7 @@ button {
 .roulette-tabs {
   gap: 8px;
   overflow-x: auto;
-  padding: 10px 0 18px;
+  padding: 6px 0 14px;
 }
 
 .sync-panel {
@@ -594,28 +621,31 @@ button:disabled {
 }
 
 .tab-button {
-  min-width: 118px;
+  min-width: auto;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: #ffffff;
   color: var(--ink);
-  padding: 10px 14px;
+  padding: 6px 12px;
+  min-height: 32px;
   font-weight: 800;
+  font-size: 14px;
 }
 
 .tab-button.active {
-  background: #111827;
-  border-color: #111827;
-  color: #ffffff;
+  background: #efefed;
+  border-color: #efefed;
+  color: #2f2f2d;
 }
 
 .add-tab-button {
-  min-width: 44px;
+  min-width: 32px;
+  height: 32px;
   border: 1px dashed #9aa7bc;
   border-radius: 999px;
   background: transparent;
   color: var(--muted);
-  font-size: 20px;
+  font-size: 17px;
 }
 
 .content-grid {
