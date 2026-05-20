@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>룰렛 보관함</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="프로젝트">
+        <div class="brand">
+          <div class="brand-mark">R</div>
+          <div>
+            <p class="eyebrow">Roulette Studio</p>
+            <h1>룰렛 보관함</h1>
+          </div>
+        </div>
+
+        <div class="section-title">
+          <span>프로젝트</span>
+          <button class="icon-button" id="addProjectButton" type="button" title="프로젝트 추가" aria-label="프로젝트 추가">
+            +
+          </button>
+        </div>
+        <div class="project-list" id="projectList"></div>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">현재 프로젝트</p>
+            <input class="project-name-input" id="projectNameInput" aria-label="프로젝트 이름" />
+          </div>
+          <div class="topbar-actions">
+            <button class="ghost-button" id="exportButton" type="button">내보내기</button>
+            <label class="ghost-button import-label" for="importInput">가져오기</label>
+            <input id="importInput" type="file" accept="application/json" hidden />
+            <button class="danger-button" id="deleteProjectButton" type="button">프로젝트 삭제</button>
+          </div>
+        </header>
+
+        <section class="sync-panel" aria-label="클라우드 동기화">
+          <div class="sync-heading">
+            <div>
+              <p class="eyebrow">Cloud Sync</p>
+              <h2>로그인 동기화</h2>
+            </div>
+            <label class="switch">
+              <input id="syncToggle" type="checkbox" />
+              <span>사용</span>
+            </label>
+          </div>
+
+          <div class="auth-row">
+            <div>
+              <span class="auth-label">계정</span>
+              <strong id="userEmail">로그인하지 않음</strong>
+            </div>
+            <div class="auth-actions">
+              <button class="ghost-button" id="signInButton" type="button">Google 로그인</button>
+              <button class="ghost-button" id="signOutButton" type="button">로그아웃</button>
+            </div>
+          </div>
+
+          <div class="sync-grid">
+            <label>
+              <span>동기화 ID</span>
+              <input id="syncIdInput" type="text" placeholder="예: lunch-wheel" autocomplete="off" />
+            </label>
+            <label class="config-field">
+              <span>Firebase 설정 JSON</span>
+              <textarea id="firebaseConfigInput" rows="4" placeholder='{"apiKey":"...","authDomain":"...","projectId":"...","appId":"..."}'></textarea>
+            </label>
+          </div>
+          <div class="sync-actions">
+            <button class="primary-button" id="saveSyncButton" type="button">동기화 설정 저장</button>
+            <button class="ghost-button" id="syncNowButton" type="button">지금 업로드</button>
+            <span class="sync-status" id="syncStatus">로컬 저장 중</span>
+          </div>
+        </section>
+
+        <nav class="roulette-tabs" id="rouletteTabs" aria-label="룰렛 탭"></nav>
+
+        <section class="content-grid">
+          <section class="wheel-panel" aria-label="룰렛">
+            <div class="wheel-header">
+              <div>
+                <p class="eyebrow">선택한 룰렛</p>
+                <input class="roulette-title-input" id="rouletteTitleInput" aria-label="룰렛 제목" />
+              </div>
+              <button class="primary-button" id="spinButton" type="button">돌리기</button>
+            </div>
+
+            <div class="wheel-stage">
+              <div class="pointer" aria-hidden="true"></div>
+              <canvas id="wheelCanvas" width="560" height="560" aria-label="룰렛 판"></canvas>
+              <div class="wheel-center">
+                <span>SPIN</span>
+              </div>
+            </div>
+
+            <div class="result-box" id="resultBox" role="status" aria-live="polite">항목을 넣고 룰렛을 돌려보세요.</div>
+          </section>
+
+          <section class="editor-panel" aria-label="룰렛 편집">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">항목 편집</p>
+                <h2>룰렛 구성</h2>
+              </div>
+              <button class="ghost-button" id="deleteRouletteButton" type="button">룰렛 삭제</button>
+            </div>
+
+            <form class="add-item-form" id="addItemForm">
+              <input id="itemInput" type="text" placeholder="새 항목 입력" autocomplete="off" />
+              <button class="primary-button" type="submit">추가</button>
+            </form>
+
+            <div class="item-list" id="itemList"></div>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
