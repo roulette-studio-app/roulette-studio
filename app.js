@@ -2,7 +2,7 @@ const STORAGE_KEY = "roulette-studio-personal-v2";
 const LEGACY_STORAGE_KEY = "roulette-studio-projects-v1";
 const SHARED_INDEX_KEY = "roulette-studio-shared-index-v1";
 const PENDING_SHARE_KEY = "roulette-studio-pending-share-v1";
-const palette = ["#7fa9b4", "#d9b06b", "#bf7b62", "#a99b91", "#c97970", "#788f84", "#7884a8", "#b1b692"];
+const palette = ["#8fa9bd", "#b8a9c9", "#9fb9b0", "#d3a7b0", "#a7b7d8", "#c0b6a8", "#9bb7c3", "#b7c4a8"];
 
 const projectList = document.querySelector("#projectList");
 const sharedProjectList = document.querySelector("#sharedProjectList");
@@ -30,8 +30,8 @@ const accountPopover = document.querySelector("#accountPopover");
 const accountSummaryText = document.querySelector("#accountSummaryText");
 const appShell = document.querySelector(".app-shell");
 const sidebarResizer = document.querySelector("#sidebarResizer");
-const mobileMenuButton = document.querySelector("#mobileSidebarToggle");
-const mobileSidebarBackdrop = document.querySelector("#sidebarBackdrop");
+const mobileMenuButton = document.querySelector("#mobileSidebarToggle") || document.querySelector("#mobileMenuButton");
+const mobileSidebarBackdrop = document.querySelector("#sidebarBackdrop") || document.querySelector("#mobileSidebarBackdrop");
 const syncStatus = document.querySelector("#syncStatus");
 const signInButton = document.querySelector("#signInButton");
 const signOutButton = document.querySelector("#signOutButton");
@@ -1047,19 +1047,25 @@ let isResizingSidebar = false;
 
 function setMobileSidebarOpen(open) {
   appShell.classList.toggle("sidebar-open", open);
-  mobileMenuButton.setAttribute("aria-expanded", String(open));
-  mobileMenuButton.setAttribute("aria-label", open ? "사이드바 닫기" : "사이드바 열기");
+  if (mobileMenuButton) {
+    mobileMenuButton.setAttribute("aria-expanded", String(open));
+    mobileMenuButton.setAttribute("aria-label", open ? "사이드바 닫기" : "사이드바 열기");
+  }
 }
 
 setMobileSidebarOpen(true);
 
-mobileMenuButton.addEventListener("click", () => {
-  setMobileSidebarOpen(!appShell.classList.contains("sidebar-open"));
-});
+if (mobileMenuButton) {
+  mobileMenuButton.addEventListener("click", () => {
+    setMobileSidebarOpen(!appShell.classList.contains("sidebar-open"));
+  });
+}
 
-mobileSidebarBackdrop.addEventListener("click", () => {
-  setMobileSidebarOpen(false);
-});
+if (mobileSidebarBackdrop) {
+  mobileSidebarBackdrop.addEventListener("click", () => {
+    setMobileSidebarOpen(false);
+  });
+}
 
 sidebarResizer.addEventListener("pointerdown", (event) => {
   isResizingSidebar = true;
