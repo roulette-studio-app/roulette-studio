@@ -1,10 +1,14 @@
-const STORAGE_KEY = "roulette-studio-projects-v1";
-const SYNC_SETTINGS_KEY = "roulette-studio-sync-settings-v1";
+const STORAGE_KEY = "roulette-studio-personal-v2";
+const LEGACY_STORAGE_KEY = "roulette-studio-projects-v1";
+const SHARED_INDEX_KEY = "roulette-studio-shared-index-v1";
 const palette = ["#2d6cdf", "#17a7a2", "#f4a62a", "#dc4768", "#4cba74", "#7a5ce1", "#ef6f3e", "#2f9bde"];
 
 const projectList = document.querySelector("#projectList");
+const sharedProjectList = document.querySelector("#sharedProjectList");
 const addProjectButton = document.querySelector("#addProjectButton");
+const joinSharedButton = document.querySelector("#joinSharedButton");
 const projectNameInput = document.querySelector("#projectNameInput");
+const workspaceTypeLabel = document.querySelector("#workspaceTypeLabel");
 const rouletteTabs = document.querySelector("#rouletteTabs");
 const rouletteTitleInput = document.querySelector("#rouletteTitleInput");
 const spinButton = document.querySelector("#spinButton");
@@ -17,20 +21,25 @@ const deleteRouletteButton = document.querySelector("#deleteRouletteButton");
 const deleteProjectButton = document.querySelector("#deleteProjectButton");
 const exportButton = document.querySelector("#exportButton");
 const importInput = document.querySelector("#importInput");
-const syncToggle = document.querySelector("#syncToggle");
-const syncIdInput = document.querySelector("#syncIdInput");
-const firebaseConfigInput = document.querySelector("#firebaseConfigInput");
-const firebaseConfigField = document.querySelector(".config-field");
-const saveSyncButton = document.querySelector("#saveSyncButton");
-const syncNowButton = document.querySelector("#syncNowButton");
+const shareProjectButton = document.querySelector("#shareProjectButton");
 const syncStatus = document.querySelector("#syncStatus");
 const signInButton = document.querySelector("#signInButton");
 const signOutButton = document.querySelector("#signOutButton");
 const userEmail = document.querySelector("#userEmail");
+const shareDialog = document.querySelector("#shareDialog");
+const shareForm = document.querySelector("#shareForm");
+const shareDialogTitle = document.querySelector("#shareDialogTitle");
+const sharePasswordInput = document.querySelector("#sharePasswordInput");
+const shareLinkField = document.querySelector("#shareLinkField");
+const shareLinkInput = document.querySelector("#shareLinkInput");
+const confirmShareButton = document.querySelector("#confirmShareButton");
+const cancelShareButton = document.querySelector("#cancelShareButton");
 
 const ctx = wheelCanvas.getContext("2d");
-let state = loadState();
-let syncSettings = loadSyncSettings();
+let personalState = loadPersonalState();
+let activeWorkspace = { type: "personal" };
+let state = personalState;
+let sharedIndex = loadSharedIndex();
 let activeProjectId = state.activeProjectId;
 let activeRouletteId = getActiveProject().activeRouletteId;
 let currentRotation = 0;
@@ -39,15 +48,12 @@ let firebaseApi = null;
 let firebaseAuth = null;
 let currentUser = null;
 let authUnsubscribe = null;
-let syncDocRef = null;
+let activeDocRef = null;
 let unsubscribeCloud = null;
-let syncSaveTimer = null;
+let saveTimer = null;
 let isApplyingRemoteState = false;
-let lastCloudUpdatedAt = 0;
-
-function getBundledFirebaseConfig() {
-  return window.ROULETTE_FIREBASE_CONFIG || null;
-}
+let shareDialogMode = "create";
+let pendingShareId = null;
 
 function uid(prefix) {
   return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -71,16 +77,7 @@ function createProject(name = "새 프로젝트") {
   };
 }
 
-function loadState() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    if (saved?.projects?.length) {
-      return saved;
-    }
-  } catch {
-    localStorage.removeItem(STORAGE_KEY);
-  }
-
+function createInitialState() {
   const firstProject = createProject("나의 첫 프로젝트");
   return {
     activeProjectId: firstProject.id,
@@ -88,33 +85,48 @@ function loadState() {
   };
 }
 
-function loadSyncSettings() {
+function loadPersonalState() {
   try {
-    const saved = JSON.parse(localStorage.getItem(SYNC_SETTINGS_KEY));
-    if (saved) {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY));
+    if (saved?.projects?.length) {
       return saved;
     }
   } catch {
-    localStorage.removeItem(SYNC_SETTINGS_KEY);
+    localStorage.removeItem(STORAGE_KEY);
   }
-
-  return {
-    enabled: false,
-    syncId: "my-roulette",
-    firebaseConfigText: "",
-  };
+  return createInitialState();
 }
 
-function saveSyncSettings() {
-  localStorage.setItem(SYNC_SETTINGS_KEY, JSON.stringify(syncSettings));
+function loadSharedIndex() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(SHARED_INDEX_KEY));
+    if (Array.isArray(saved)) {
+      return saved;
+    }
+  } catch {
+    localStorage.removeItem(SHARED_INDEX_KEY);
+  }
+  return [];
+}
+
+function saveSharedIndex() {
+  localStorage.setItem(SHARED_INDEX_KEY, JSON.stringify(sharedIndex));
+}
+
+function getBundledFirebaseConfig() {
+  return window.ROULETTE_FIREBASE_CONFIG || null;
 }
 
 function saveState(options = {}) {
   state.activeProjectId = activeProjectId;
   getActiveProject().activeRouletteId = activeRouletteId;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 
-  if (!options.skipCloud && syncSettings.enabled && syncDocRef && !isApplyingRemoteState) {
+  if (activeWorkspace.type === "personal") {
+    personalState = state;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(personalState));
+  }
+
+  if (!options.skipCloud && currentUser && activeDocRef && !isApplyingRemoteState) {
     scheduleCloudSave();
   }
 }
@@ -133,11 +145,14 @@ function getActiveRoulette() {
 }
 
 function setActiveProject(projectId) {
+  activeWorkspace = { type: "personal" };
+  state = personalState;
   activeProjectId = projectId;
   const project = getActiveProject();
   activeRouletteId = project.activeRouletteId || project.roulettes[0].id;
   currentRotation = 0;
   saveState();
+  subscribeToActiveWorkspace();
   render();
 }
 
@@ -152,20 +167,14 @@ function render() {
   const project = getActiveProject();
   const roulette = getActiveRoulette();
 
+  workspaceTypeLabel.textContent = activeWorkspace.type === "shared" ? "공동작업 프로젝트" : "내 프로젝트";
   projectNameInput.value = project.name;
   rouletteTitleInput.value = roulette.title;
-  syncToggle.checked = syncSettings.enabled;
-  syncIdInput.value = syncSettings.syncId;
-  firebaseConfigInput.value = syncSettings.firebaseConfigText;
-  firebaseConfigInput.disabled = Boolean(getBundledFirebaseConfig());
-  firebaseConfigInput.placeholder = getBundledFirebaseConfig()
-    ? "앱에 Firebase 설정이 포함되어 있습니다."
-    : '{"apiKey":"...","authDomain":"...","projectId":"...","appId":"..."}';
-  firebaseConfigField.hidden = Boolean(getBundledFirebaseConfig());
   userEmail.textContent = currentUser?.email || "로그인하지 않음";
   signOutButton.disabled = !currentUser;
-  syncNowButton.disabled = !syncSettings.enabled || !currentUser;
+  shareProjectButton.disabled = !currentUser || activeWorkspace.type === "shared";
   renderProjects();
+  renderSharedProjects();
   renderTabs(project);
   renderItems(roulette);
   drawWheel(roulette.items, currentRotation);
@@ -175,13 +184,33 @@ function render() {
 
 function renderProjects() {
   projectList.innerHTML = "";
-  state.projects.forEach((project) => {
+  personalState.projects.forEach((project) => {
     const button = document.createElement("button");
     button.type = "button";
-    button.className = `project-button${project.id === activeProjectId ? " active" : ""}`;
+    button.className = `project-button${activeWorkspace.type === "personal" && project.id === activeProjectId ? " active" : ""}`;
     button.textContent = project.name;
     button.addEventListener("click", () => setActiveProject(project.id));
     projectList.append(button);
+  });
+}
+
+function renderSharedProjects() {
+  sharedProjectList.innerHTML = "";
+  if (!sharedIndex.length) {
+    const empty = document.createElement("p");
+    empty.className = "shared-empty";
+    empty.textContent = "공유받은 룰렛이 없습니다.";
+    sharedProjectList.append(empty);
+    return;
+  }
+
+  sharedIndex.forEach((shared) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `project-button shared${activeWorkspace.type === "shared" && activeWorkspace.id === shared.id ? " active" : ""}`;
+    button.textContent = shared.name || "공유 룰렛";
+    button.addEventListener("click", () => openSharedWorkspace(shared.id));
+    sharedProjectList.append(button);
   });
 }
 
@@ -311,11 +340,14 @@ function shortenText(text, maxLength) {
 }
 
 function addProject() {
-  const project = createProject(`프로젝트 ${state.projects.length + 1}`);
-  state.projects.push(project);
+  activeWorkspace = { type: "personal" };
+  state = personalState;
+  const project = createProject(`프로젝트 ${personalState.projects.length + 1}`);
+  personalState.projects.push(project);
   activeProjectId = project.id;
   activeRouletteId = project.activeRouletteId;
   saveState();
+  subscribeToActiveWorkspace();
   render();
   projectNameInput.focus();
   projectNameInput.select();
@@ -402,9 +434,9 @@ async function loadFirebaseApi() {
 }
 
 function parseFirebaseConfig() {
-  const config = getBundledFirebaseConfig() || JSON.parse(syncSettings.firebaseConfigText);
-  if (!config.apiKey || !config.projectId || !config.appId) {
-    throw new Error("Firebase 설정 JSON에 apiKey, projectId, appId가 필요합니다.");
+  const config = getBundledFirebaseConfig();
+  if (!config?.apiKey || !config?.projectId || !config?.appId) {
+    throw new Error("firebase-config.js에 Firebase 설정이 필요합니다.");
   }
   return config;
 }
@@ -422,11 +454,13 @@ async function setupFirebase() {
     authUnsubscribe = api.onAuthStateChanged(firebaseAuth, (user) => {
       currentUser = user;
       render();
-      if (syncSettings.enabled && currentUser) {
-        startCloudSync({ uploadCurrentIfEmpty: true });
+      if (currentUser) {
+        setSyncStatus("로그인됨. 자동 동기화 중...", "working");
+        subscribeToActiveWorkspace();
+        handleIncomingShareLink();
       } else {
         stopCloudSync();
-        setSyncStatus(syncSettings.enabled ? "로그인하면 동기화됩니다." : "로컬 저장 중");
+        setSyncStatus("로그인하면 자동 동기화됩니다.");
       }
     });
   }
@@ -436,12 +470,6 @@ async function setupFirebase() {
 
 async function signIn() {
   try {
-    syncSettings = {
-      enabled: syncToggle.checked,
-      syncId: syncIdInput.value.trim() || "my-roulette",
-      firebaseConfigText: firebaseConfigInput.value.trim(),
-    };
-    saveSyncSettings();
     const { api, auth } = await setupFirebase();
     const provider = new api.GoogleAuthProvider();
     try {
@@ -469,53 +497,49 @@ async function signOutUser() {
   currentUser = null;
   stopCloudSync();
   render();
-  setSyncStatus("로그아웃했습니다. 로컬 저장 중입니다.");
+  setSyncStatus("로그아웃했습니다. 이 기기에는 로컬 저장됩니다.");
 }
 
-async function startCloudSync({ uploadCurrentIfEmpty = false } = {}) {
-  stopCloudSync();
-
-  if (!syncSettings.enabled) {
-    setSyncStatus("로컬 저장 중");
-    return;
+async function getDocRefForWorkspace(workspace) {
+  if (!currentUser) {
+    return null;
   }
 
-  if (!syncSettings.syncId.trim() || (!getBundledFirebaseConfig() && !syncSettings.firebaseConfigText.trim())) {
-    setSyncStatus("동기화 ID와 Firebase 설정을 입력해 주세요.", "error");
+  const { api, app } = await setupFirebase();
+  const db = api.getFirestore(app);
+  if (workspace.type === "shared") {
+    return api.doc(db, "sharedWorkspaces", workspace.id);
+  }
+  return api.doc(db, "users", currentUser.uid, "workspaces", "default");
+}
+
+async function subscribeToActiveWorkspace() {
+  stopCloudSync();
+  if (!currentUser) {
     return;
   }
 
   try {
-    setSyncStatus("클라우드 연결 중...", "working");
-    const { api, app } = await setupFirebase();
-
-    if (!currentUser) {
-      setSyncStatus("Google 로그인 후 동기화됩니다.", "working");
-      return;
-    }
-
-    const db = api.getFirestore(app);
-    syncDocRef = api.doc(db, "users", currentUser.uid, "workspaces", syncSettings.syncId.trim());
-
-    const snapshot = await api.getDoc(syncDocRef);
+    activeDocRef = await getDocRefForWorkspace(activeWorkspace);
+    const snapshot = await firebaseApi.getDoc(activeDocRef);
     if (snapshot.exists()) {
       applyRemotePayload(snapshot.data());
-    } else if (uploadCurrentIfEmpty) {
+    } else {
       await uploadCloudState();
     }
 
-    unsubscribeCloud = api.onSnapshot(
-      syncDocRef,
+    unsubscribeCloud = firebaseApi.onSnapshot(
+      activeDocRef,
       (remoteSnapshot) => {
         if (remoteSnapshot.exists()) {
           applyRemotePayload(remoteSnapshot.data());
         }
-        setSyncStatus("계정에 동기화됨", "ok");
+        setSyncStatus(activeWorkspace.type === "shared" ? "공동작업 룰렛 동기화됨" : "내 룰렛 동기화됨", "ok");
       },
       () => setSyncStatus("Firestore 권한 또는 Firebase 설정을 확인해 주세요.", "error"),
     );
   } catch (error) {
-    setSyncStatus(error.message || "클라우드 연결에 실패했습니다.", "error");
+    setSyncStatus(error.message || "동기화 연결에 실패했습니다.", "error");
   }
 }
 
@@ -524,8 +548,8 @@ function stopCloudSync() {
     unsubscribeCloud();
   }
   unsubscribeCloud = null;
-  syncDocRef = null;
-  clearTimeout(syncSaveTimer);
+  activeDocRef = null;
+  clearTimeout(saveTimer);
 }
 
 function applyRemotePayload(payload) {
@@ -533,58 +557,216 @@ function applyRemotePayload(payload) {
     return;
   }
 
-  const remoteUpdatedAt = Number(payload.updatedAt || 0);
-  if (remoteUpdatedAt && remoteUpdatedAt < lastCloudUpdatedAt) {
-    return;
-  }
-
-  lastCloudUpdatedAt = remoteUpdatedAt;
   isApplyingRemoteState = true;
   state = payload.state;
   activeProjectId = state.activeProjectId || state.projects[0].id;
   activeRouletteId = getActiveProject().activeRouletteId || getActiveProject().roulettes[0].id;
   currentRotation = 0;
-  saveState({ skipCloud: true });
+
+  if (activeWorkspace.type === "personal") {
+    personalState = state;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(personalState));
+  }
+
+  updateSharedNameFromState();
   render();
   isApplyingRemoteState = false;
 }
 
+function updateSharedNameFromState() {
+  if (activeWorkspace.type !== "shared") {
+    return;
+  }
+  const project = state.projects[0];
+  const entry = sharedIndex.find((item) => item.id === activeWorkspace.id);
+  if (entry && project?.name) {
+    entry.name = project.name;
+    saveSharedIndex();
+  }
+}
+
 function scheduleCloudSave() {
-  clearTimeout(syncSaveTimer);
-  syncSaveTimer = window.setTimeout(uploadCloudState, 550);
+  clearTimeout(saveTimer);
+  saveTimer = window.setTimeout(uploadCloudState, 550);
   setSyncStatus("변경 사항 업로드 대기 중...", "working");
 }
 
 async function uploadCloudState() {
-  if (!syncDocRef || !firebaseApi || !currentUser) {
-    setSyncStatus("로그인 후 업로드할 수 있습니다.", "error");
+  if (!activeDocRef || !firebaseApi || !currentUser) {
     return;
   }
 
   try {
-    const updatedAt = Date.now();
-    lastCloudUpdatedAt = updatedAt;
-    await firebaseApi.setDoc(syncDocRef, {
-      ownerId: currentUser.uid,
+    const payload = {
+      updatedBy: currentUser.uid,
+      name: state.projects[0]?.name || "공유 룰렛",
       state,
-      updatedAt,
-      schemaVersion: 1,
-    });
-    setSyncStatus("계정에 동기화됨", "ok");
+      updatedAt: Date.now(),
+      schemaVersion: 2,
+    };
+    if (activeWorkspace.type === "personal") {
+      payload.ownerId = currentUser.uid;
+    }
+    await firebaseApi.setDoc(activeDocRef, payload, { merge: true });
+    setSyncStatus(activeWorkspace.type === "shared" ? "공동작업 룰렛 동기화됨" : "내 룰렛 동기화됨", "ok");
   } catch {
     setSyncStatus("업로드 실패: Firestore 권한을 확인해 주세요.", "error");
   }
 }
 
+function cloneProject(project) {
+  return JSON.parse(JSON.stringify(project));
+}
+
+async function hashPassword(password) {
+  const bytes = new TextEncoder().encode(password);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function createShareId() {
+  return crypto.getRandomValues(new Uint32Array(4)).reduce((text, value) => text + value.toString(36), "");
+}
+
+function buildShareUrl(shareId) {
+  const url = new URL(window.location.href);
+  url.searchParams.set("share", shareId);
+  return url.toString();
+}
+
+function openCreateShareDialog() {
+  if (!currentUser) {
+    setSyncStatus("공유하려면 먼저 로그인해 주세요.", "error");
+    return;
+  }
+  shareDialogMode = "create";
+  pendingShareId = null;
+  shareDialogTitle.textContent = "룰렛 공유";
+  confirmShareButton.textContent = "공유 만들기";
+  sharePasswordInput.value = "";
+  shareLinkInput.value = "";
+  shareLinkField.hidden = true;
+  shareDialog.showModal();
+  sharePasswordInput.focus();
+}
+
+function openJoinShareDialog(shareId = "") {
+  if (!currentUser) {
+    setSyncStatus("공유 룰렛에 입장하려면 먼저 로그인해 주세요.", "error");
+    signIn();
+    return;
+  }
+  shareDialogMode = "join";
+  pendingShareId = shareId || prompt("공유 링크나 공유 ID를 입력하세요.") || "";
+  pendingShareId = extractShareId(pendingShareId);
+  if (!pendingShareId) {
+    return;
+  }
+  shareDialogTitle.textContent = "공유 룰렛 입장";
+  confirmShareButton.textContent = "입장";
+  sharePasswordInput.value = "";
+  shareLinkInput.value = "";
+  shareLinkField.hidden = true;
+  shareDialog.showModal();
+  sharePasswordInput.focus();
+}
+
+function extractShareId(value) {
+  try {
+    const url = new URL(value);
+    return url.searchParams.get("share") || value.trim();
+  } catch {
+    return value.trim();
+  }
+}
+
+async function createSharedWorkspace(password) {
+  const shareId = createShareId();
+  const passwordHash = await hashPassword(password);
+  const project = cloneProject(getActiveProject());
+  const sharedState = {
+    activeProjectId: project.id,
+    projects: [project],
+  };
+  const { api, app } = await setupFirebase();
+  const db = api.getFirestore(app);
+  const docRef = api.doc(db, "sharedWorkspaces", shareId);
+  await api.setDoc(docRef, {
+    ownerId: currentUser.uid,
+    updatedBy: currentUser.uid,
+    passwordHash,
+    name: project.name,
+    state: sharedState,
+    updatedAt: Date.now(),
+    schemaVersion: 2,
+  });
+  rememberSharedWorkspace(shareId, project.name);
+  shareLinkInput.value = buildShareUrl(shareId);
+  shareLinkField.hidden = false;
+  await navigator.clipboard?.writeText(shareLinkInput.value).catch(() => {});
+  setSyncStatus("공유 링크를 만들었습니다. 링크가 복사되었습니다.", "ok");
+}
+
+async function joinSharedWorkspace(shareId, password) {
+  const { api, app } = await setupFirebase();
+  const db = api.getFirestore(app);
+  const docRef = api.doc(db, "sharedWorkspaces", shareId);
+  const snapshot = await api.getDoc(docRef);
+  if (!snapshot.exists()) {
+    throw new Error("공유 룰렛을 찾을 수 없습니다.");
+  }
+  const payload = snapshot.data();
+  if (payload.passwordHash !== await hashPassword(password)) {
+    throw new Error("비밀번호가 맞지 않습니다.");
+  }
+  rememberSharedWorkspace(shareId, payload.name || "공유 룰렛");
+  await openSharedWorkspace(shareId);
+  window.history.replaceState({}, "", window.location.pathname);
+}
+
+function rememberSharedWorkspace(id, name) {
+  const existing = sharedIndex.find((entry) => entry.id === id);
+  if (existing) {
+    existing.name = name || existing.name;
+  } else {
+    sharedIndex.push({ id, name: name || "공유 룰렛" });
+  }
+  saveSharedIndex();
+  renderSharedProjects();
+}
+
+async function openSharedWorkspace(id) {
+  activeWorkspace = { type: "shared", id };
+  const fallback = createProject("공유 룰렛");
+  state = { activeProjectId: fallback.id, projects: [fallback] };
+  activeProjectId = state.activeProjectId;
+  activeRouletteId = getActiveProject().activeRouletteId;
+  currentRotation = 0;
+  render();
+  await subscribeToActiveWorkspace();
+}
+
+function handleIncomingShareLink() {
+  const url = new URL(window.location.href);
+  const shareId = url.searchParams.get("share");
+  if (shareId && currentUser) {
+    openJoinShareDialog(shareId);
+  }
+}
+
 addProjectButton.addEventListener("click", addProject);
+joinSharedButton.addEventListener("click", () => openJoinShareDialog());
 spinButton.addEventListener("click", spinRoulette);
 signInButton.addEventListener("click", signIn);
 signOutButton.addEventListener("click", signOutUser);
+shareProjectButton.addEventListener("click", openCreateShareDialog);
+cancelShareButton.addEventListener("click", () => shareDialog.close());
 
 projectNameInput.addEventListener("input", () => {
   getActiveProject().name = projectNameInput.value.trimStart() || "이름 없는 프로젝트";
   saveState();
   renderProjects();
+  updateSharedNameFromState();
 });
 
 rouletteTitleInput.addEventListener("input", () => {
@@ -619,14 +801,17 @@ deleteRouletteButton.addEventListener("click", () => {
 });
 
 deleteProjectButton.addEventListener("click", () => {
-  if (state.projects.length <= 1) {
-    const fresh = createProject("나의 첫 프로젝트");
-    state = { activeProjectId: fresh.id, projects: [fresh] };
-    activeProjectId = fresh.id;
-  } else {
-    state.projects = state.projects.filter((project) => project.id !== activeProjectId);
-    activeProjectId = state.projects[0].id;
+  if (activeWorkspace.type === "shared") {
+    setSyncStatus("공유 룰렛 자체 삭제는 아직 지원하지 않습니다.", "error");
+    return;
   }
+  if (personalState.projects.length <= 1) {
+    personalState = createInitialState();
+  } else {
+    personalState.projects = personalState.projects.filter((project) => project.id !== activeProjectId);
+  }
+  state = personalState;
+  activeProjectId = personalState.projects[0].id;
   activeRouletteId = getActiveProject().activeRouletteId;
   saveState();
   render();
@@ -665,24 +850,28 @@ importInput.addEventListener("change", async () => {
   }
 });
 
-saveSyncButton.addEventListener("click", async () => {
-  syncSettings = {
-    enabled: syncToggle.checked,
-    syncId: syncIdInput.value.trim() || "my-roulette",
-    firebaseConfigText: firebaseConfigInput.value.trim(),
-  };
-  saveSyncSettings();
-  render();
-  await startCloudSync({ uploadCurrentIfEmpty: true });
-});
-
-syncNowButton.addEventListener("click", async () => {
-  if (!syncSettings.enabled) {
-    setSyncStatus("동기화를 먼저 켜 주세요.", "error");
+shareForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const password = sharePasswordInput.value.trim();
+  if (!password) {
+    sharePasswordInput.focus();
     return;
   }
-  await uploadCloudState();
+
+  try {
+    confirmShareButton.disabled = true;
+    if (shareDialogMode === "create") {
+      await createSharedWorkspace(password);
+    } else {
+      await joinSharedWorkspace(pendingShareId, password);
+      shareDialog.close();
+    }
+  } catch (error) {
+    setSyncStatus(error.message || "공유 처리에 실패했습니다.", "error");
+  } finally {
+    confirmShareButton.disabled = false;
+  }
 });
 
 render();
-startCloudSync();
+setupFirebase().catch((error) => setSyncStatus(error.message, "error"));
