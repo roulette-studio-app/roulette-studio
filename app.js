@@ -2,7 +2,7 @@ const STORAGE_KEY = "roulette-studio-personal-v2";
 const LEGACY_STORAGE_KEY = "roulette-studio-projects-v1";
 const SHARED_INDEX_KEY = "roulette-studio-shared-index-v1";
 const PENDING_SHARE_KEY = "roulette-studio-pending-share-v1";
-const palette = ["#3a7896", "#d99a37", "#c85f36", "#8f8278", "#d65041", "#3d5549", "#3d4b78", "#a4aa7f"];
+const palette = ["#7fa9b4", "#d9b06b", "#bf7b62", "#a99b91", "#c97970", "#788f84", "#7884a8", "#b1b692"];
 
 const projectList = document.querySelector("#projectList");
 const sharedProjectList = document.querySelector("#sharedProjectList");
@@ -28,6 +28,8 @@ const shareProjectButton = document.querySelector("#shareProjectButton");
 const accountMenuButton = document.querySelector("#accountMenuButton");
 const accountPopover = document.querySelector("#accountPopover");
 const accountSummaryText = document.querySelector("#accountSummaryText");
+const appShell = document.querySelector(".app-shell");
+const sidebarResizer = document.querySelector("#sidebarResizer");
 const syncStatus = document.querySelector("#syncStatus");
 const signInButton = document.querySelector("#signInButton");
 const signOutButton = document.querySelector("#signOutButton");
@@ -1038,3 +1040,24 @@ shareForm.addEventListener("submit", async (event) => {
 
 render();
 setupFirebase().catch((error) => setSyncStatus(error.message, "error"));
+
+let isResizingSidebar = false;
+
+sidebarResizer.addEventListener("pointerdown", (event) => {
+  isResizingSidebar = true;
+  appShell.classList.add("resizing");
+  sidebarResizer.setPointerCapture(event.pointerId);
+});
+
+sidebarResizer.addEventListener("pointermove", (event) => {
+  if (!isResizingSidebar) {
+    return;
+  }
+  const width = Math.min(420, Math.max(220, event.clientX));
+  document.documentElement.style.setProperty("--sidebar-width", `${width}px`);
+});
+
+sidebarResizer.addEventListener("pointerup", () => {
+  isResizingSidebar = false;
+  appShell.classList.remove("resizing");
+});
