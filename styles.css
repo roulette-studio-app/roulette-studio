@@ -1205,4 +1205,28 @@ canvas {
     min-width: 30px;
     height: 30px;
   }
+
+  .share-dialog {
+    width: min(92vw, 380px);
+    max-height: 78vh;
+  }
+
+  .dialog-card {
+    gap: 12px;
+    padding: 18px;
+  }
+
+  .dialog-card input {
+    min-height: 42px;
+    font-size: 16px;
+  }
+
+  .dialog-actions,
+  .delete-options {
+    grid-template-columns: 1fr;
+  }
+
+  .dialog-actions {
+    display: grid;
+  }
 }
