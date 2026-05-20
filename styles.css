@@ -223,6 +223,62 @@ button {
   justify-content: flex-end;
 }
 
+.more-menu {
+  position: relative;
+}
+
+.more-button {
+  width: 42px;
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--muted);
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.more-button:hover,
+.more-button[aria-expanded="true"] {
+  color: var(--ink);
+  border-color: #b9c3d4;
+}
+
+.more-menu-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 20;
+  width: 150px;
+  display: grid;
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: var(--shadow);
+}
+
+.more-menu-panel button,
+.menu-file-action {
+  min-height: 36px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ink);
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  font-weight: 800;
+  text-align: left;
+}
+
+.more-menu-panel button:hover,
+.menu-file-action:hover {
+  background: #f1f5fb;
+}
+
 .project-name-input,
 .roulette-title-input {
   width: min(560px, 100%);

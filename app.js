@@ -22,6 +22,8 @@ const deleteRouletteButton = document.querySelector("#deleteRouletteButton");
 const deleteProjectButton = document.querySelector("#deleteProjectButton");
 const exportButton = document.querySelector("#exportButton");
 const importInput = document.querySelector("#importInput");
+const moreActionsButton = document.querySelector("#moreActionsButton");
+const moreActionsPanel = document.querySelector("#moreActionsPanel");
 const shareProjectButton = document.querySelector("#shareProjectButton");
 const syncStatus = document.querySelector("#syncStatus");
 const signInButton = document.querySelector("#signInButton");
@@ -859,6 +861,17 @@ signOutButton.addEventListener("click", signOutUser);
 shareProjectButton.addEventListener("click", openCreateShareDialog);
 cancelShareButton.addEventListener("click", () => shareDialog.close());
 deleteProjectButton.addEventListener("click", openDeleteDialog);
+moreActionsButton.addEventListener("click", () => {
+  const nextOpen = moreActionsPanel.hidden;
+  moreActionsPanel.hidden = !nextOpen;
+  moreActionsButton.setAttribute("aria-expanded", String(nextOpen));
+});
+document.addEventListener("click", (event) => {
+  if (!event.target.closest(".more-menu")) {
+    moreActionsPanel.hidden = true;
+    moreActionsButton.setAttribute("aria-expanded", "false");
+  }
+});
 cancelDeleteButton.addEventListener("click", () => deleteDialog.close());
 deleteForMeButton.addEventListener("click", () => {
   if (confirmDanger("이 공유 룰렛을 내 목록에서만 삭제할까요? 다른 사람에게는 그대로 남습니다.")) {

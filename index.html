@@ -52,9 +52,14 @@
           </div>
           <div class="topbar-actions">
             <button class="ghost-button" id="shareProjectButton" type="button">룰렛 공유</button>
-            <button class="subtle-button" id="exportButton" type="button">백업</button>
-            <label class="subtle-button import-label" for="importInput">복원</label>
-            <input id="importInput" type="file" accept="application/json" hidden />
+            <div class="more-menu">
+              <button class="more-button" id="moreActionsButton" type="button" aria-label="추가 작업" aria-expanded="false">⋯</button>
+              <div class="more-menu-panel" id="moreActionsPanel" hidden>
+                <button id="exportButton" type="button">백업</button>
+                <label class="menu-file-action" for="importInput">복원</label>
+                <input id="importInput" type="file" accept="application/json" hidden />
+              </div>
+            </div>
             <button class="danger-button" id="deleteProjectButton" type="button">프로젝트 삭제</button>
           </div>
         </header>
