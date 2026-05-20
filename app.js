@@ -1,6 +1,7 @@
 const STORAGE_KEY = "roulette-studio-personal-v2";
 const LEGACY_STORAGE_KEY = "roulette-studio-projects-v1";
 const SHARED_INDEX_KEY = "roulette-studio-shared-index-v1";
+const PENDING_SHARE_KEY = "roulette-studio-pending-share-v1";
 const palette = ["#2d6cdf", "#17a7a2", "#f4a62a", "#dc4768", "#4cba74", "#7a5ce1", "#ef6f3e", "#2f9bde"];
 
 const projectList = document.querySelector("#projectList");
@@ -479,6 +480,7 @@ async function setupFirebase() {
 
 async function signIn() {
   try {
+    rememberPendingShareFromUrl();
     const { api, auth } = await setupFirebase();
     const provider = new api.GoogleAuthProvider();
     try {
@@ -817,9 +819,17 @@ async function openSharedWorkspace(id) {
 
 function handleIncomingShareLink() {
   const url = new URL(window.location.href);
-  const shareId = url.searchParams.get("share");
+  const shareId = url.searchParams.get("share") || sessionStorage.getItem(PENDING_SHARE_KEY);
   if (shareId && currentUser) {
+    sessionStorage.removeItem(PENDING_SHARE_KEY);
     openJoinShareDialog(shareId);
+  }
+}
+
+function rememberPendingShareFromUrl() {
+  const shareId = new URL(window.location.href).searchParams.get("share");
+  if (shareId) {
+    sessionStorage.setItem(PENDING_SHARE_KEY, shareId);
   }
 }
 
