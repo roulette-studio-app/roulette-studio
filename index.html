@@ -17,14 +17,17 @@
           </div>
         </div>
 
-        <section class="account-card" aria-label="로그인">
-          <p class="eyebrow">Account</p>
-          <strong id="userEmail">로그인하지 않음</strong>
-          <div class="account-actions">
-            <button class="ghost-dark-button" id="signInButton" type="button">Google 로그인</button>
-            <button class="ghost-dark-button" id="signOutButton" type="button">로그아웃</button>
+        <section class="account-compact" aria-label="계정">
+          <button class="account-avatar" id="accountMenuButton" type="button" aria-label="계정 메뉴" aria-expanded="false">?</button>
+          <div class="account-popover" id="accountPopover" hidden>
+            <p class="eyebrow">Account</p>
+            <strong id="userEmail">로그인하지 않음</strong>
+            <p class="account-status" id="syncStatus">로그인하면 자동 동기화됩니다.</p>
+            <div class="account-actions">
+              <button class="ghost-dark-button" id="signInButton" type="button">Google 로그인</button>
+              <button class="ghost-dark-button" id="signOutButton" type="button">로그아웃</button>
+            </div>
           </div>
-          <p class="account-status" id="syncStatus">로그인하면 자동 동기화됩니다.</p>
         </section>
 
         <div class="section-title">
@@ -51,7 +54,7 @@
             <input class="project-name-input" id="projectNameInput" aria-label="프로젝트 이름" />
           </div>
           <div class="topbar-actions">
-            <button class="ghost-button" id="shareProjectButton" type="button">룰렛 공유</button>
+            <button class="tool-button" id="shareProjectButton" type="button" title="룰렛 공유" aria-label="룰렛 공유">↗</button>
             <div class="more-menu">
               <button class="more-button" id="moreActionsButton" type="button" aria-label="추가 작업" aria-expanded="false">⋯</button>
               <div class="more-menu-panel" id="moreActionsPanel" hidden>
@@ -60,7 +63,7 @@
                 <input id="importInput" type="file" accept="application/json" hidden />
               </div>
             </div>
-            <button class="danger-button" id="deleteProjectButton" type="button">프로젝트 삭제</button>
+            <button class="tool-button danger-tool" id="deleteProjectButton" type="button" title="프로젝트 삭제" aria-label="프로젝트 삭제">×</button>
           </div>
         </header>
 

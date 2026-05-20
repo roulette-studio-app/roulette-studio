@@ -25,6 +25,8 @@ const importInput = document.querySelector("#importInput");
 const moreActionsButton = document.querySelector("#moreActionsButton");
 const moreActionsPanel = document.querySelector("#moreActionsPanel");
 const shareProjectButton = document.querySelector("#shareProjectButton");
+const accountMenuButton = document.querySelector("#accountMenuButton");
+const accountPopover = document.querySelector("#accountPopover");
 const syncStatus = document.querySelector("#syncStatus");
 const signInButton = document.querySelector("#signInButton");
 const signOutButton = document.querySelector("#signOutButton");
@@ -182,6 +184,7 @@ function render() {
   projectNameInput.value = project.name;
   rouletteTitleInput.value = roulette.title;
   userEmail.textContent = currentUser?.email || "로그인하지 않음";
+  accountMenuButton.textContent = currentUser?.email?.slice(0, 1).toUpperCase() || "?";
   signOutButton.disabled = !currentUser;
   shareProjectButton.disabled = !currentUser || activeWorkspace.type === "shared";
   renderProjects();
@@ -340,8 +343,8 @@ function drawWheel(items, rotationDegrees = 0) {
 
   ctx.beginPath();
   ctx.arc(0, 0, radius, 0, Math.PI * 2);
-  ctx.strokeStyle = "#111827";
-  ctx.lineWidth = 8;
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+  ctx.lineWidth = 2;
   ctx.stroke();
   ctx.restore();
 }
@@ -862,7 +865,10 @@ function rememberPendingShareFromUrl() {
   }
 }
 
-addProjectButton.addEventListener("click", addProject);
+addProjectButton.addEventListener("click", (event) => {
+  event.preventDefault();
+  addProject();
+});
 joinSharedButton.addEventListener("click", () => openJoinShareDialog());
 spinButton.addEventListener("click", spinRoulette);
 signInButton.addEventListener("click", signIn);
@@ -875,10 +881,19 @@ moreActionsButton.addEventListener("click", () => {
   moreActionsPanel.hidden = !nextOpen;
   moreActionsButton.setAttribute("aria-expanded", String(nextOpen));
 });
+accountMenuButton.addEventListener("click", () => {
+  const nextOpen = accountPopover.hidden;
+  accountPopover.hidden = !nextOpen;
+  accountMenuButton.setAttribute("aria-expanded", String(nextOpen));
+});
 document.addEventListener("click", (event) => {
   if (!event.target.closest(".more-menu")) {
     moreActionsPanel.hidden = true;
     moreActionsButton.setAttribute("aria-expanded", "false");
+  }
+  if (!event.target.closest(".account-compact")) {
+    accountPopover.hidden = true;
+    accountMenuButton.setAttribute("aria-expanded", "false");
   }
 });
 cancelDeleteButton.addEventListener("click", () => deleteDialog.close());

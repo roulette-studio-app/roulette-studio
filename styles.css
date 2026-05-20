@@ -5,14 +5,14 @@
   --ink: #172033;
   --muted: #6d778b;
   --line: #dce2ee;
-  --blue: #2d6cdf;
-  --blue-dark: #1d4fac;
-  --teal: #17a7a2;
-  --rose: #dc4768;
-  --amber: #f4a62a;
-  --green: #4cba74;
-  --violet: #7a5ce1;
-  --shadow: 0 18px 45px rgba(29, 42, 68, 0.12);
+  --blue: #5b8def;
+  --blue-dark: #3f70cc;
+  --teal: #55beb8;
+  --rose: #e46c8a;
+  --amber: #f5b84b;
+  --green: #70c58b;
+  --violet: #927be8;
+  --shadow: 0 14px 34px rgba(29, 42, 68, 0.09);
 }
 
 * {
@@ -50,8 +50,8 @@ button {
 }
 
 .sidebar {
-  background: #111827;
-  color: #f8fafc;
+  background: #eef5fb;
+  color: var(--ink);
   padding: 24px;
   display: flex;
   flex-direction: column;
@@ -70,7 +70,8 @@ button {
   display: grid;
   place-items: center;
   border-radius: 8px;
-  background: linear-gradient(135deg, var(--teal), var(--blue));
+  background: linear-gradient(135deg, #78d6d0, #73a6f4);
+  color: #ffffff;
   font-weight: 800;
 }
 
@@ -89,7 +90,7 @@ button {
 }
 
 .sidebar .eyebrow {
-  color: #98a5bb;
+  color: #708199;
 }
 
 .section-title,
@@ -111,10 +112,10 @@ button {
 .icon-button {
   width: 34px;
   height: 34px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 1px solid #cbd8e8;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.08);
-  color: #ffffff;
+  background: #ffffff;
+  color: var(--ink);
   font-size: 22px;
   line-height: 1;
 }
@@ -124,17 +125,41 @@ button {
   gap: 8px;
 }
 
-.account-card {
+.account-compact {
+  position: relative;
+}
+
+.account-avatar {
+  width: 42px;
+  height: 42px;
+  border: 1px solid #cbd8e8;
+  border-radius: 50%;
+  background: #ffffff;
+  color: var(--blue-dark);
+  font-weight: 900;
+}
+
+.account-avatar[aria-expanded="true"] {
+  box-shadow: 0 0 0 4px rgba(91, 141, 239, 0.14);
+}
+
+.account-popover {
+  position: absolute;
+  top: 50px;
+  left: 0;
+  z-index: 30;
+  width: 250px;
   display: grid;
   gap: 10px;
   padding: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid var(--line);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.06);
+  background: #ffffff;
+  box-shadow: var(--shadow);
 }
 
-.account-card strong {
-  color: #ffffff;
+.account-popover strong {
+  color: var(--ink);
   overflow-wrap: anywhere;
 }
 
@@ -146,31 +171,31 @@ button {
 
 .ghost-dark-button {
   min-height: 36px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--line);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.08);
-  color: #ffffff;
+  background: #f7f9fc;
+  color: var(--ink);
   font-weight: 800;
 }
 
 .account-status {
   margin: 0;
-  color: #b9c5d8;
+  color: var(--muted);
   font-size: 12px;
   font-weight: 700;
   line-height: 1.45;
 }
 
 .account-status[data-mode="ok"] {
-  color: #86efac;
+  color: #15803d;
 }
 
 .account-status[data-mode="working"] {
-  color: #93c5fd;
+  color: var(--blue-dark);
 }
 
 .account-status[data-mode="error"] {
-  color: #fda4af;
+  color: #b72d4d;
 }
 
 .project-button {
@@ -178,7 +203,7 @@ button {
   border: 1px solid transparent;
   border-radius: 8px;
   background: transparent;
-  color: #dbe5f4;
+  color: #405069;
   padding: 12px 14px;
   text-align: left;
   font-weight: 700;
@@ -190,7 +215,11 @@ button {
 }
 
 .project-button.shared {
-  color: #d9f8f6;
+  color: #405069;
+}
+
+.project-button.shared.active {
+  color: #111827;
 }
 
 .shared-title {
@@ -243,6 +272,27 @@ button {
 .more-button[aria-expanded="true"] {
   color: var(--ink);
   border-color: #b9c3d4;
+}
+
+.tool-button {
+  width: 42px;
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--ink);
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.tool-button:hover {
+  border-color: #b9c3d4;
+  box-shadow: 0 8px 18px rgba(29, 42, 68, 0.08);
+}
+
+.danger-tool {
+  color: #b72d4d;
+  background: #fff7f9;
 }
 
 .more-menu-panel {
@@ -578,7 +628,8 @@ canvas {
   display: grid;
   place-items: center;
   background: #ffffff;
-  border: 8px solid #111827;
+  border: 6px solid #ffffff;
+  box-shadow: 0 8px 22px rgba(29, 42, 68, 0.14);
   font-weight: 900;
   color: #111827;
 }
@@ -771,10 +822,9 @@ canvas {
   }
 
   .topbar-actions {
-    justify-content: stretch;
+    justify-content: flex-start;
   }
 
-  .topbar-actions > *,
   .wheel-header .primary-button,
   .panel-header .ghost-button {
     width: 100%;
