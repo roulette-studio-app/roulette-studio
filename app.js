@@ -42,6 +42,7 @@ const shareDialog = document.querySelector("#shareDialog");
 const shareForm = document.querySelector("#shareForm");
 const shareDialogTitle = document.querySelector("#shareDialogTitle");
 const sharePasswordInput = document.querySelector("#sharePasswordInput");
+const sharePasswordField = sharePasswordInput.closest("label");
 const shareLinkField = document.querySelector("#shareLinkField");
 const shareLinkInput = document.querySelector("#shareLinkInput");
 const copyShareLinkButton = document.querySelector("#copyShareLinkButton");
@@ -742,15 +743,41 @@ function buildShareMessage(shareId) {
   return `공유 ID: ${shareId}\n공유 링크: ${buildShareUrl(shareId)}`;
 }
 
+function showShareInfo(shareId) {
+  pendingShareId = shareId;
+  shareDialogTitle.textContent = "공유 정보";
+  confirmShareButton.hidden = true;
+  sharePasswordField.hidden = true;
+  sharePasswordInput.required = false;
+  sharePasswordInput.value = "";
+  shareLinkInput.value = buildShareUrl(shareId);
+  shareIdInput.value = shareId;
+  shareLinkField.hidden = false;
+  shareIdField.hidden = false;
+}
+
 function openCreateShareDialog() {
   if (!currentUser) {
     setSyncStatus("공유하려면 먼저 로그인해 주세요.", "error");
     return;
   }
+  const existingShareId = activeWorkspace.type === "shared" ? activeWorkspace.id : getActiveProject().sharedWorkspaceId;
+  if (existingShareId) {
+    shareDialogMode = "info";
+    showShareInfo(existingShareId);
+    shareDialog.showModal();
+    shareLinkInput.focus();
+    shareLinkInput.select();
+    return;
+  }
+
   shareDialogMode = "create";
   pendingShareId = null;
   shareDialogTitle.textContent = "룰렛 공유";
   confirmShareButton.textContent = "공유 만들기";
+  confirmShareButton.hidden = false;
+  sharePasswordField.hidden = false;
+  sharePasswordInput.required = true;
   sharePasswordInput.value = "";
   shareLinkInput.value = "";
   shareIdInput.value = "";
@@ -774,6 +801,9 @@ function openJoinShareDialog(shareId = "") {
   }
   shareDialogTitle.textContent = "공유 룰렛 입장";
   confirmShareButton.textContent = "입장";
+  confirmShareButton.hidden = false;
+  sharePasswordField.hidden = false;
+  sharePasswordInput.required = true;
   sharePasswordInput.value = "";
   shareLinkInput.value = "";
   shareIdInput.value = "";
@@ -1113,6 +1143,11 @@ importInput.addEventListener("change", async () => {
 
 shareForm.addEventListener("submit", async (event) => {
   event.preventDefault();
+  if (shareDialogMode === "info") {
+    shareDialog.close();
+    return;
+  }
+
   const password = sharePasswordInput.value.trim();
   if (!password) {
     sharePasswordInput.focus();
