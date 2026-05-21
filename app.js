@@ -1180,6 +1180,14 @@ addItemForm.addEventListener("submit", (event) => {
   itemInput.focus();
 });
 
+itemInput.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter" || event.isComposing) {
+    return;
+  }
+  event.preventDefault();
+  addItemForm.requestSubmit();
+});
+
 deleteRouletteButton.addEventListener("click", () => {
   const project = getActiveProject();
   if (project.roulettes.length <= 1) {
