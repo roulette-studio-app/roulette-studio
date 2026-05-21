@@ -47,6 +47,7 @@ const sharePasswordField = sharePasswordInput.closest("label");
 const shareLinkField = document.querySelector("#shareLinkField");
 const shareLinkInput = document.querySelector("#shareLinkInput");
 const copyShareLinkButton = document.querySelector("#copyShareLinkButton");
+const copyShareFeedback = document.querySelector("#copyShareFeedback");
 const confirmShareButton = document.querySelector("#confirmShareButton");
 const cancelShareButton = document.querySelector("#cancelShareButton");
 const deleteDialog = document.querySelector("#deleteDialog");
@@ -76,6 +77,7 @@ let saveTimer = null;
 let isApplyingRemoteState = false;
 let shareDialogMode = "create";
 let pendingShareId = null;
+let copyFeedbackTimer = null;
 
 function uid(prefix) {
   return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -755,6 +757,14 @@ function showShareInfo(shareId) {
   shareLinkField.hidden = false;
 }
 
+function showCopyFeedback() {
+  clearTimeout(copyFeedbackTimer);
+  copyShareFeedback.hidden = false;
+  copyFeedbackTimer = window.setTimeout(() => {
+    copyShareFeedback.hidden = true;
+  }, 1800);
+}
+
 async function migrateShareIdIfNeeded(shareId) {
   if (!shareId || isShortShareId(shareId)) {
     return shareId;
@@ -924,6 +934,7 @@ async function createSharedWorkspace(password) {
   shareLinkInput.value = buildShareUrl(shareId);
   shareLinkField.hidden = false;
   await navigator.clipboard?.writeText(shareLinkInput.value).catch(() => {});
+  showCopyFeedback();
   setSyncStatus("공유 링크를 만들었습니다. 링크가 복사되었습니다.", "ok");
 }
 
@@ -1102,6 +1113,7 @@ copyShareLinkButton.addEventListener("click", async () => {
   }
   await navigator.clipboard?.writeText(shareLinkInput.value).catch(() => {});
   shareLinkInput.select();
+  showCopyFeedback();
   setSyncStatus("공유 링크를 복사했습니다.", "ok");
 });
 

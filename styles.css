@@ -941,6 +941,12 @@ canvas {
   min-height: 42px;
 }
 
+.copy-feedback {
+  color: #4f7d6a;
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .dialog-actions {
   display: flex;
   justify-content: flex-end;
