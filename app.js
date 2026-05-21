@@ -1132,10 +1132,20 @@ copyShareIdButton.addEventListener("click", async () => {
 });
 
 projectNameInput.addEventListener("input", () => {
-  getActiveProject().name = projectNameInput.value.trimStart() || "이름 없는 프로젝트";
+  getActiveProject().name = projectNameInput.value.trimStart();
   saveState();
   renderProjects();
   updateSharedNameFromState();
+});
+
+projectNameInput.addEventListener("blur", () => {
+  const project = getActiveProject();
+  if (!project.name.trim()) {
+    project.name = "이름 없는 프로젝트";
+    saveState();
+    render();
+    updateSharedNameFromState();
+  }
 });
 
 rouletteTitleInput.addEventListener("input", () => {
