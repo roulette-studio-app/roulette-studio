@@ -173,6 +173,10 @@ function getRouletteRotation(roulette) {
   return Number.isFinite(rotation) ? rotation : 0;
 }
 
+function normalizeDegrees(degrees) {
+  return ((degrees % 360) + 360) % 360;
+}
+
 async function setActiveProject(projectId) {
   const wasSharedWorkspace = activeWorkspace.type === "shared";
   if (wasSharedWorkspace) {
@@ -434,24 +438,32 @@ function spinRoulette() {
   const winnerIndex = Math.floor(Math.random() * items.length);
   const sliceDegrees = 360 / items.length;
   const winnerCenter = winnerIndex * sliceDegrees + sliceDegrees / 2;
-  const pointerDegrees = 0;
+  const startRotation = getRouletteRotation(roulette);
+  const targetRotation = normalizeDegrees(-winnerCenter);
+  const spinDelta = normalizeDegrees(targetRotation - startRotation);
   const extraTurns = 5 + Math.floor(Math.random() * 3);
-  const targetRotation = extraTurns * 360 + pointerDegrees - winnerCenter;
+  const animationRotation = extraTurns * 360 + spinDelta;
 
-  currentRotation += targetRotation;
-  wheelCanvas.style.transform = `rotate(${currentRotation}deg)`;
+  currentRotation = startRotation;
+  drawWheel(items, startRotation);
+  wheelCanvas.style.transition = "none";
+  wheelCanvas.style.transform = "rotate(0deg)";
+  wheelCanvas.offsetHeight;
+  wheelCanvas.style.transition = "";
+  requestAnimationFrame(() => {
+    wheelCanvas.style.transform = `rotate(${animationRotation}deg)`;
+  });
 
   window.setTimeout(() => {
     isSpinning = false;
-    const normalizedRotation = ((currentRotation % 360) + 360) % 360;
     const activeRoulette = getActiveRoulette();
-    const result = getPointedItem(items, normalizedRotation);
-    activeRoulette.rotation = normalizedRotation;
+    const result = items[winnerIndex];
+    activeRoulette.rotation = targetRotation;
     activeRoulette.lastResult = result;
-    currentRotation = normalizedRotation;
+    currentRotation = targetRotation;
 
     wheelCanvas.style.transition = "none";
-    drawWheel(activeRoulette.items, normalizedRotation);
+    drawWheel(activeRoulette.items, targetRotation);
     wheelCanvas.style.transform = "rotate(0deg)";
     requestAnimationFrame(() => {
       wheelCanvas.style.transition = "";
