@@ -1145,6 +1145,7 @@ let isResizingSidebar = false;
 
 function setMobileSidebarOpen(open) {
   appShell.classList.toggle("sidebar-open", open);
+  document.body.classList.toggle("mobile-sidebar-open", open);
   if (mobileMenuButton) {
     mobileMenuButton.setAttribute("aria-expanded", String(open));
     mobileMenuButton.setAttribute("aria-label", open ? "사이드바 닫기" : "사이드바 열기");
