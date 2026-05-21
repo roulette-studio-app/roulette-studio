@@ -791,6 +791,31 @@ function showCopyFeedback() {
   }, 1800);
 }
 
+async function copyShareLink() {
+  const shareLink = shareLinkInput.value;
+  if (!shareLink) {
+    return;
+  }
+
+  let copied = false;
+  if (navigator.clipboard?.writeText) {
+    copied = await navigator.clipboard.writeText(shareLink).then(() => true).catch(() => false);
+  }
+
+  if (!copied) {
+    shareLinkInput.focus();
+    shareLinkInput.select();
+    copied = document.execCommand?.("copy") || false;
+  }
+
+  if (copied) {
+    showCopyFeedback();
+    setSyncStatus("공유 링크를 복사했습니다.", "ok");
+  } else {
+    setSyncStatus("복사가 안 되면 링크 칸을 길게 눌러 복사해 주세요.", "error");
+  }
+}
+
 async function migrateShareIdIfNeeded(shareId) {
   if (!shareId || isShortShareId(shareId)) {
     return shareId;
@@ -1134,15 +1159,8 @@ confirmPersonalDeleteButton.addEventListener("click", () => {
     deletePersonalProject();
   }
 });
-copyShareLinkButton.addEventListener("click", async () => {
-  if (!shareLinkInput.value) {
-    return;
-  }
-  await navigator.clipboard?.writeText(shareLinkInput.value).catch(() => {});
-  shareLinkInput.select();
-  showCopyFeedback();
-  setSyncStatus("공유 링크를 복사했습니다.", "ok");
-});
+copyShareLinkButton.addEventListener("click", copyShareLink);
+shareLinkInput.addEventListener("click", copyShareLink);
 
 projectNameInput.addEventListener("input", () => {
   getActiveProject().name = projectNameInput.value.trimStart();

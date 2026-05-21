@@ -942,13 +942,23 @@ canvas {
 
 .copy-row {
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) 86px;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.copy-row input {
+  min-width: 0;
 }
 
 .copy-row .ghost-button {
   min-height: 42px;
-  min-width: 58px;
+  min-width: 86px;
+  padding-inline: 14px;
+  cursor: pointer;
+  touch-action: manipulation;
+  position: relative;
+  z-index: 1;
 }
 
 .copy-row .ghost-button.copied {
