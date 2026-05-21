@@ -200,6 +200,7 @@ function render() {
   renderTabs(project);
   renderItems(roulette);
   drawWheel(roulette.items, currentRotation);
+  resultBox.textContent = roulette.lastResult ? `결과: ${roulette.lastResult}` : "항목을 넣고 룰렛을 돌려보세요.";
   spinButton.disabled = isSpinning || roulette.items.length < 2;
   deleteRouletteButton.disabled = project.roulettes.length <= 1;
 }
@@ -367,16 +368,21 @@ function shortenText(text, maxLength) {
   return text.length > maxLength ? `${text.slice(0, maxLength - 1)}…` : text;
 }
 
-function addProject() {
+async function addProject() {
+  stopCloudSync();
   activeWorkspace = { type: "personal" };
   state = personalState;
   const project = createProject(`프로젝트 ${personalState.projects.length + 1}`);
   personalState.projects.push(project);
   activeProjectId = project.id;
   activeRouletteId = project.activeRouletteId;
-  saveState();
-  subscribeToActiveWorkspace();
+  saveState({ skipCloud: true });
   render();
+  if (currentUser) {
+    activeDocRef = await getDocRefForWorkspace(activeWorkspace);
+    await uploadCloudState();
+    await subscribeToActiveWorkspace();
+  }
   projectNameInput.focus();
   projectNameInput.select();
 }
@@ -424,7 +430,10 @@ function spinRoulette() {
       wheelCanvas.style.transition = "";
     });
     currentRotation = normalizedRotation;
-    resultBox.textContent = `결과: ${getPointedItem(items, normalizedRotation)}`;
+    const result = getPointedItem(items, normalizedRotation);
+    getActiveRoulette().lastResult = result;
+    saveState();
+    resultBox.textContent = `결과: ${result}`;
     render();
   }, 4400);
 }
@@ -738,9 +747,10 @@ function extractShareId(value) {
 }
 
 async function createSharedWorkspace(password) {
-  const shareId = createShareId();
+  const currentProject = getActiveProject();
+  const shareId = activeWorkspace.type === "shared" ? activeWorkspace.id : currentProject.sharedWorkspaceId || createShareId();
   const passwordHash = await hashPassword(password);
-  const project = cloneProject(getActiveProject());
+  const project = cloneProject(currentProject);
   const sharedState = {
     activeProjectId: project.id,
     projects: [project],
@@ -757,6 +767,10 @@ async function createSharedWorkspace(password) {
     updatedAt: Date.now(),
     schemaVersion: 2,
   });
+  if (activeWorkspace.type === "personal") {
+    currentProject.sharedWorkspaceId = shareId;
+    saveState();
+  }
   rememberSharedWorkspace(shareId, project.name);
   shareLinkInput.value = buildShareUrl(shareId);
   shareLinkField.hidden = false;
