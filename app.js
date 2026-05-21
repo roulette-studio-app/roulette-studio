@@ -784,8 +784,21 @@ async function migrateShareIdIfNeeded(shareId) {
     newSnapshot = await api.getDoc(newDocRef);
   }
 
+  const currentProject = getActiveProject();
+  const migratedProject = activeWorkspace.type === "personal" ? cloneProject(currentProject) : payload.state.projects[0];
+  if (migratedProject) {
+    migratedProject.sharedWorkspaceId = newShareId;
+  }
+  const migratedState = migratedProject ? {
+    activeProjectId: migratedProject.id,
+    projects: [migratedProject],
+  } : payload.state;
+
   await api.setDoc(newDocRef, {
     ...payload,
+    updatedBy: currentUser.uid,
+    name: migratedProject?.name || payload.name,
+    state: migratedState,
     updatedAt: Date.now(),
   });
 
@@ -801,7 +814,7 @@ async function migrateShareIdIfNeeded(shareId) {
   }
 
   sharedIndex = sharedIndex.filter((entry) => entry.id !== shareId);
-  rememberSharedWorkspace(newShareId, payload.name || getActiveProject().name || "공유 룰렛");
+  rememberSharedWorkspace(newShareId, migratedProject?.name || payload.name || getActiveProject().name || "공유 룰렛");
   return newShareId;
 }
 
@@ -816,8 +829,10 @@ async function openCreateShareDialog() {
     setSyncStatus("공유 정보를 불러오는 중...", "working");
     try {
       existingShareId = await migrateShareIdIfNeeded(existingShareId);
-    } catch {
-      setSyncStatus("공유 ID를 짧게 바꾸지 못했습니다. 기존 공유 정보를 표시합니다.", "error");
+    } catch (error) {
+      const message = error.message || "공유 ID를 짧게 바꾸지 못했습니다.";
+      setSyncStatus(message, "error");
+      window.alert(`${message}\n\n로그인 상태와 Firestore 권한을 확인한 뒤 다시 눌러주세요.`);
     }
     showShareInfo(existingShareId);
     shareDialog.showModal();
